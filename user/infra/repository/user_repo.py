@@ -7,6 +7,7 @@ from user.infra.db_models.user import User
 
 from utils.db_utils import row_to_dict
 
+
 class UserRepository(IUserRepository):
     def save(self, user: UserVo):
         new_user = User(
@@ -43,3 +44,26 @@ class UserRepository(IUserRepository):
             #     updated_at=user.updated_at
             # )
 
+    def find_by_id(self, user_id: str) -> UserVo:
+        with SessionLocal() as db:
+            user = db.query(User).filter(User.id == user_id).first()
+
+        if not user:
+            raise HTTPException(status_code=422)
+
+        return UserVo(**row_to_dict(user))
+
+    def update(self, user_vo: UserVo):
+        with SessionLocal() as db:
+            user = db.query(User).filter(User.id == user_vo.id).first()
+
+            if not user:
+                raise HTTPException(status_code=422)
+
+            user.name = user_vo.name
+            user.password = user_vo.password
+
+            db.add(user)
+            db.commit()
+
+        return user
