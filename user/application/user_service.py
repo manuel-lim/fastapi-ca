@@ -60,3 +60,11 @@ class UserService:
         user.updated_at = datetime.now()
         self.user_repo.update(user)
         return user
+
+
+    def get_users(self, page: int, items_per_page: int) -> tuple[int, list[User]]:
+        return self.user_repo.get_users(page, items_per_page)
+
+
+    def delete_user(self, user_id: str):
+        self.user_repo.delete(user_id)

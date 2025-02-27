@@ -8,6 +8,7 @@ from pydantic import BaseModel
 
 # from user.application.user_service import UserService
 from containers import Container
+from user.application import user_service
 from user.application.user_service import UserService
 import logging
 
@@ -48,3 +49,18 @@ def update_user(
     except Exception as e:
         logger.error(traceback.format_exc())
     return user
+
+@router.get("")
+@inject
+def get_users(page: int = 1, item_per_page: int = 10, user_service: UserService = Depends(Provide[Container.user_service])):
+    total_count, users = user_service.get_users(page, item_per_page)
+    return {
+        'total_count': total_count,
+        'page': page,
+        'users': users,
+    }
+
+@router.delete("", status_code=204)
+@inject
+def delete_user(user_id: str, user_service: UserService = Depends(Provide[Container.user_service])):
+    user_service.delete_user(user_id)
