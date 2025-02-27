@@ -1,3 +1,4 @@
+import traceback
 from typing import Annotated
 
 from dependency_injector.wiring import Provide, inject
@@ -8,8 +9,12 @@ from pydantic import BaseModel
 # from user.application.user_service import UserService
 from containers import Container
 from user.application.user_service import UserService
+import logging
 
 router = APIRouter(prefix="/users")
+
+logger = logging.getLogger("uvicorn")
+logger.setLevel(logging.INFO)
 
 class CreateUserBody(BaseModel):
     name: str
@@ -38,5 +43,8 @@ def update_user(
         user: UpdateUser,
         user_service: UserService = Depends(Provide[Container.user_service])):
 
-    user = user_service.update_user(user_id, name=user.name, password=user.password)
+    try:
+        user = user_service.update_user(user_id, name=user.name, password=user.password)
+    except Exception as e:
+        logger.error(traceback.format_exc())
     return user
