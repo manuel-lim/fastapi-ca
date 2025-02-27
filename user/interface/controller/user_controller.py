@@ -1,9 +1,10 @@
 import traceback
+from datetime import datetime
 from typing import Annotated
 
 from dependency_injector.wiring import Provide, inject
 from fastapi import APIRouter, Depends
-from pydantic import BaseModel
+from pydantic import BaseModel, EmailStr, Field
 
 
 # from user.application.user_service import UserService
@@ -17,22 +18,37 @@ router = APIRouter(prefix="/users")
 logger = logging.getLogger("uvicorn")
 logger.setLevel(logging.INFO)
 
+
 class CreateUserBody(BaseModel):
-    name: str
-    email: str
-    password: str
+    name: str = Field(min_length=2, max_length=32)
+    email: EmailStr = Field(max_length=64)
+    password: str = Field(min_length=8, max_length=32)
+
 
 class UpdateUser(BaseModel):
-    name: str | None = None
-    password: str | None = None
+    name: str | None = Field(min_length=2, max_length=32, default=None)
+    password: str | None = Field(min_length=8, max_length=32, default=None)
 
 
-@router.post("", status_code=201)
+class UserResponse(BaseModel):
+    id: str
+    name: str
+    email: str
+    created_at: datetime
+    updated_at: datetime
+
+
+class GetUsersResponse(BaseModel):
+    total_count: int
+    page: int
+    users: list[UserResponse]
+
+@router.post("", status_code=201, response_model=UserResponse)
 @inject
 def create_user(
         user: CreateUserBody,
         user_service: UserService = Depends(Provide[Container.user_service]),
-):
+) -> UserResponse:
     created_user = user_service.create_user(name=user.name, email=user.email, password=user.password, memo='')
 
     return created_user
@@ -50,7 +66,7 @@ def update_user(
         logger.error(traceback.format_exc())
     return user
 
-@router.get("")
+@router.get("", response_model=GetUsersResponse)
 @inject
 def get_users(page: int = 1, item_per_page: int = 10, user_service: UserService = Depends(Provide[Container.user_service])):
     total_count, users = user_service.get_users(page, item_per_page)
