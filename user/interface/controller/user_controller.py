@@ -14,6 +14,13 @@ from user.application import user_service
 from user.application.user_service import UserService
 import logging
 
+from common.auth import CurrentUser, get_current_user
+
+
+class UpdateUserBody(BaseModel):
+    name: str | None = Field(min_length=2, max_length=32, default=None)
+    password: str | None = Field(min_length=8, max_length=32, default=None)
+
 router = APIRouter(prefix="/users")
 
 logger = logging.getLogger("uvicorn")
@@ -54,17 +61,14 @@ def create_user(
 
     return created_user
 
-@router.put('/{user_id}')
+@router.put('', response_model=UserResponse)
 @inject
 def update_user(
-        user_id: str,
-        user: UpdateUser,
-        user_service: UserService = Depends(Provide[Container.user_service])):
+    current_user: Annotated[CurrentUser, Depends(get_current_user)],
+    body: UpdateUserBody,
+    user_service: UserService = Depends(Provide[Container.user_service])):
 
-    try:
-        user = user_service.update_user(user_id, name=user.name, password=user.password)
-    except Exception as e:
-        logger.error(traceback.format_exc())
+    user = user_service.update_user(current_user.id, name=body.name, password=body.password)
     return user
 
 @router.get("", response_model=GetUsersResponse)
@@ -79,11 +83,14 @@ def get_users(page: int = 1, item_per_page: int = 10, user_service: UserService 
 
 @router.delete("", status_code=204)
 @inject
-def delete_user(user_id: str, user_service: UserService = Depends(Provide[Container.user_service])):
-    user_service.delete_user(user_id)
+def delete_user(
+        current_user: Annotated[CurrentUser, Depends(get_current_user)],
+        user_service: UserService = Depends(Provide[Container.user_service])):
+    user_service.delete_user(current_user.id)
 
 @router.post('/login')
 @inject
 def login(form_data: Annotated[OAuth2PasswordRequestForm, Depends()], user_service: UserService = Depends(Provide[Container.user_service])):
     access_token = user_service.login(email=form_data.username, password=form_data.password)
     return {'access_token': access_token, 'token_type': 'bearer'}
+

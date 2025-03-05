@@ -2,13 +2,14 @@ from dependency_injector.wiring import inject, Provide
 # from typing import Annotated
 from fastapi import HTTPException, Depends, status
 from pydantic_core.core_schema import DatetimeSchema
+from sqlalchemy.sql.coercions import RoleImpl
 from ulid import ULID
 from datetime import datetime
 from user.domain.user import User
 from user.domain.repository.user_repo import IUserRepository
 from user.infra.repository.user_repo import UserRepository
 from utils.crypto import Crypto
-from common.auth import create_access_token
+from common.auth import create_access_token, Role
 
 class UserService:
     @inject
@@ -76,5 +77,5 @@ class UserService:
         if not self.crypto.verify(password, user.password):
             raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED)
 
-        access_token = create_access_token(payload={'user_id': user.id})
+        access_token = create_access_token(payload={'user_id': user.id}, role=Role.USER)
         return access_token
