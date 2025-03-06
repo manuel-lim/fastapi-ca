@@ -20,7 +20,7 @@ class NoteRepository(INoteRepository):
 
     def find_by_id(self, user_id: str, id: str) -> NoteVo:
         with SessionLocal() as session:
-            note = session.query(Note).option(joinedload(Note.tags)).filter(Note.user_id == user_id).filter(Note.id == id).first()
+            note = session.query(Note).options(joinedload(Note.tags)).filter(Note.user_id == user_id).filter(Note.id == id).first()
             if not note:
                 raise HTTPException(status_code=422)
         return NoteVo(**row_to_dict(note))
@@ -110,7 +110,7 @@ class NoteRepository(INoteRepository):
             if not tag:
                 return 0, []
 
-            query = session.query(Note).filter(Note.user_id == user_id).filter(Note.tags.any(id=tag.id)).all()
+            query = session.query(Note).filter(Note.user_id == user_id).filter(Note.tags.any(id=tag.id))
 
             total_count = query.count()
             notes = query.offset((page-1) * items_per_page).limit(items_per_page).all()
