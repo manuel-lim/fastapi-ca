@@ -24,6 +24,9 @@ class CurrentUser:
     id: str
     role: Role
 
+    def __str__(self):
+        return f'{self.id} ({self.role})'
+
 def create_access_token(
         payload: dict,
         role: Role,
