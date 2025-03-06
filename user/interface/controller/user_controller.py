@@ -55,10 +55,9 @@ class GetUsersResponse(BaseModel):
 @inject
 def create_user(
         user: CreateUserBody,
-        background_tasks: BackgroundTasks,
         user_service: UserService = Depends(Provide[Container.user_service]),
 ) -> UserResponse:
-    created_user = user_service.create_user(name=user.name, email=user.email, password=user.password, memo='', background_tasks=background_tasks)
+    created_user = user_service.create_user(name=user.name, email=user.email, password=user.password, memo='')
 
     return created_user
 

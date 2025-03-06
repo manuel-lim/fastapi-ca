@@ -10,8 +10,7 @@ from user.domain.repository.user_repo import IUserRepository
 from user.infra.repository.user_repo import UserRepository
 from utils.crypto import Crypto
 from common.auth import create_access_token, Role
-
-from user.application.email_service import EmailService
+from user.application.send_welcome_email_task import SendWelcomeEmailTask
 
 class UserService:
     @inject
@@ -19,15 +18,13 @@ class UserService:
             self,
             # user_repo: IUserRepository = Depends(Provide[Container.user_repo]),
             user_repo: IUserRepository,
-            email_service: EmailService,
     ):
         # self.user_repo: IUserRepository = UserRepository()
         self.user_repo = user_repo
         self.ulid = ULID()
         self.crypto = Crypto()
-        self.email_service = email_service
 
-    def create_user(self, name: str, email: str, password: str, memo: str, background_tasks: BackgroundTasks):
+    def create_user(self, name: str, email: str, password: str, memo: str):
         _user = None
 
         try:
@@ -52,7 +49,8 @@ class UserService:
         )
 
         self.user_repo.save(user)
-        background_tasks.add_task(self.email_service.send_mail, user.email)
+        SendWelcomeEmailTask().run(user.email)
+
         return user
 
     def update_user(self, user_id: str, name: str | None = None, password: str | None = None):

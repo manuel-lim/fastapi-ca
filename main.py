@@ -5,14 +5,10 @@ from fastapi.requests import Request
 from fastapi.responses import JSONResponse
 
 from user.interface.controller.user_controller import router as user_router
-from user.interface.controller.async_ex import router as async_ex_router
-
 from note.interface.controllers.note_controller import router as note_router
 
 app = FastAPI()
 app.include_router(user_router)
-app.include_router(async_ex_router)
-
 app.include_router(note_router)
 
 app.container = Container()
