@@ -1,29 +1,13 @@
 import asyncio
-from datetime import datetime
-from fastapi import APIRouter
-from typing import Annotated
-from fastapi import APIRouter, Depends
-from config import Settings, get_settings
+from fastapi import APIRouter, BackgroundTasks
 
-router = APIRouter(prefix="/async-test")
+router = APIRouter(prefix='/bg-task-test')
 
-async def async_task(num):
-    print("async_task", num)
-    await asyncio.sleep(1)
-    return num
+async def perform_task(task_id: int):
+    await asyncio.sleep(3)
+    print(f'{task_id} done!')
 
-@router.post("")
-async def async_example():
-    now = datetime.now()
-    results = await asyncio.gather(async_task(1), async_task(2), async_task(3))
-    print(datetime.now() - now)
-
-    return {"results": results}
-
-@router.get("")
-async def info(settings: Annotated[Settings, Depends(get_settings)]):
-    return {
-        'database_username': settings.database_username,
-        'database_password': settings.database_password,
-        'jwt_secret_key': settings.jwt_secret,
-    }
+@router.post('/{task_id}')
+def create_task(task_id: int, background_tasks: BackgroundTasks):
+    background_tasks.add_task(perform_task, task_id=task_id)
+    return {'message': 'Task created'}

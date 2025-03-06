@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import Annotated
 
 from dependency_injector.wiring import Provide, inject
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, BackgroundTasks
 from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 
@@ -55,9 +55,10 @@ class GetUsersResponse(BaseModel):
 @inject
 def create_user(
         user: CreateUserBody,
+        background_tasks: BackgroundTasks,
         user_service: UserService = Depends(Provide[Container.user_service]),
 ) -> UserResponse:
-    created_user = user_service.create_user(name=user.name, email=user.email, password=user.password, memo='')
+    created_user = user_service.create_user(name=user.name, email=user.email, password=user.password, memo='', background_tasks=background_tasks)
 
     return created_user
 
